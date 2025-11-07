@@ -1,6 +1,11 @@
-def main():
-    print("Hello from link-tree!")
+from dash import Dash
 
+
+from layout.layout_heander import Layout
+app = Dash(__name__)
+app.layout = Layout.creat_layout()
 
 if __name__ == "__main__":
-    main()
+    app.run(debug=True)
+
+print("erro")
