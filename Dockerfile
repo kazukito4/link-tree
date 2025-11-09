@@ -9,11 +9,11 @@ RUN apt-get update && \
         build-essential && \
     rm -rf /var/lib/apt/lists/*
 
-# Download the latest installer, Run the installer then remove it
+# Download do Instalador mais recente, roda ele e aí remove
 ADD https://astral.sh/uv/install.sh /uv-installer.sh
 RUN sh /uv-installer.sh && rm /uv-installer.sh
 
-# Ensure the installed binary is on the `PATH`
+# Garantir que o binario instalado está no `PATH`
 ENV PATH="/root/.local/bin/:$PATH"
 
 WORKDIR /app
@@ -22,9 +22,10 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=1
 
+# copia apenas o que precisa pro uv sync rodar
 COPY ./pyproject.toml .
 
-# Install any needed packages specified in requirements.txt
+# Instala qualquer pacote no requirements.txt
 RUN uv sync
 
 #-----------------------------Production Stage-----------------------------------------
@@ -35,8 +36,8 @@ USER appuser
 
 WORKDIR /app
 
-# Ensure the installed binary is on the `PATH`
-ENV PATH="/root/.local/bin/:$PATH"
+# Garantir que o binario instalado está no `PATH`
+ENV PATH="/app/.venv/bin/:$PATH"
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -45,7 +46,9 @@ ENV PIP_NO_CACHE_DIR=1
 COPY /src src
 COPY --from=builder /app/.venv .venv
 
-# Make port 8000 available to the world outside this container
+# expor a porta 8000
 EXPOSE 8000
 
+# copiar o comando do uv do root
+COPY --from=builder /root/.local/bin/uv /usr/local/bin/uv
 CMD [ "uv","run", "src/main.py"]
