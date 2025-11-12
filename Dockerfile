@@ -1,30 +1,54 @@
-FROM python:3.12-slim
+#-----------------------------Build Stage-----------------------------------------
+FROM python:3.12-bookworm AS builder
 
 # The installer requires curl (and certificates) to download the release archive
-RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends --no-install-suggests \
+        curl \
+        ca-certificates \
+        build-essential && \
+    rm -rf /var/lib/apt/lists/*
 
-# Download the latest installer
+# Download do Instalador mais recente, roda ele e aí remove
 ADD https://astral.sh/uv/install.sh /uv-installer.sh
-
-# Run the installer then remove it
 RUN sh /uv-installer.sh && rm /uv-installer.sh
 
-# Ensure the installed binary is on the `PATH`
+# Garantir que o binario instalado está no `PATH`
 ENV PATH="/root/.local/bin/:$PATH"
 
-RUN mkdir /src
-
-WORKDIR /src
+WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV PIP_NO_CACHE_DIR=1
 
-COPY . .
+# copia apenas o que precisa pro uv sync rodar
+COPY ./pyproject.toml .
 
-# Install any needed packages specified in requirements.txt
-RUN uv add --no-cache-dir -r requirements.txt
+# Instala qualquer pacote no requirements.txt
+RUN uv sync
 
-# Make port 8000 available to the world outside this container
+#-----------------------------Production Stage-----------------------------------------
+FROM python:3.12-slim-bookworm AS production
+
+RUN useradd --create-home appuser
+USER appuser
+
+WORKDIR /app
+
+# Garantir que o binario instalado está no `PATH`
+ENV PATH="/app/.venv/bin/:$PATH"
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PIP_NO_CACHE_DIR=1
+
+COPY /src src
+COPY --from=builder /app/.venv .venv
+
+# expor a porta 8000
 EXPOSE 8000
 
+# copiar o comando do uv do root
+COPY --from=builder /root/.local/bin/uv /usr/local/bin/uv
 CMD [ "uv","run", "src/main.py"]
