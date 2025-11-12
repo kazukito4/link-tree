@@ -1,4 +1,4 @@
-from dash import Dash, html, Input, Output, State
+from dash import html
 import dash_bootstrap_components as dbc
 from layout.layout_button import buttons
 
@@ -23,7 +23,7 @@ class Layout():
 
                         dbc.Button(
                             "LINK",
-                            id="add-input-OHHH",
+                            id="button-LINK",
                             color="secondary",
                             style={"marginLeft": "1000px"}
                         ),
@@ -48,7 +48,7 @@ class Layout():
                     buttons()
                 ]),
                 html.Div(
-                    id="input-SAFADA",
+                    id="input-caixa_de_anotações",
                     style={
                         "marginTop": "40px",
                         "display": "flex",
